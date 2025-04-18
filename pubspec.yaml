@@ -1,0 +1,18 @@
+name: tshorts
+version: 1.0.0+1
+description: TShorts - 자동 텍스트 쇼츠 생성 앱
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_tts: ^3.5.2
+  ffmpeg_kit_flutter: ^4.5.1
+  file_picker: ^6.1.1
+  path_provider: ^2.1.1
+  permission_handler: ^11.1.0
+
+flutter:
+  uses-material-design: true
