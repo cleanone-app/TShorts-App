@@ -16,3 +16,5 @@ dependencies:
 
 flutter:
   uses-material-design: true
+dependencies:
+  ffmpeg_kit_flutter: ^4.5.1
