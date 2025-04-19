@@ -1,0 +1,6 @@
+run = "flutter run -d chrome"
+language = "dart"
+entrypoint = "lib/main.dart"
+
+[env]
+FLUTTER_WEB_USE_SKIA = "true"
