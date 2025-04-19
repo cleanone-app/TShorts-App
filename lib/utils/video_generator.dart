@@ -1,29 +1,22 @@
 import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
+import '../models/template_model.dart';
 
-class VideoGenerator {
-  Future<String> generateVideo({
-    required String backgroundImagePath,
-    required String subtitleImagePath,
-    required String ttsAudioPath,
-    required String bgmAudioPath,
-  }) async {
-    final directory = await getTemporaryDirectory();
-    final outputPath = '${directory.path}/output.mp4';
+Future<void> generateVideo(VideoTemplate template) async {
+  final background = '/storage/emulated/0/Download/${template.defaultBackground}';
+  final music = '/storage/emulated/0/Download/${template.defaultMusic}';
+  final output = '/storage/emulated/0/Download/output.mp4';
 
-    final command = '''
-      -loop 1 -i $backgroundImagePath 
-      -i $subtitleImagePath 
-      -i $ttsAudioPath 
-      -i $bgmAudioPath 
-      -filter_complex "[0:v][1:v] overlay=0:0:enable='between(t,0,20)'" 
-      -map 2:a -map 3:a -shortest 
-      -c:v libx264 -c:a aac -strict experimental 
-      -y $outputPath
-    ''';
+  final text = '이것은 템플릿 영상입니다';
+  final yPos = template.subtitlePosition == 'top' ? '50' : '(h-text_h)-50';
 
-    await FFmpegKit.execute(command);
-    return outputPath;
-  }
+  final command = '''
+  -loop 1 -i $background -i $music -filter_complex "
+  [0:v]scale=720:1280,format=yuv420p,
+  drawtext=text='$text':fontcolor=white:fontsize=48:
+  x=(w-text_w)/2:y=$yPos:
+  enable='between(t,0,5)',fade=t=in:st=0:d=0.5
+  " -shortest -y $output
+  ''';
+
+  await FFmpegKit.execute(command);
 }
