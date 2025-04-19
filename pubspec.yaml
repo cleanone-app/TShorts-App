@@ -1,29 +1,23 @@
 name: tshorts_app
-description: A text-based short video generator app
-publish_to: 'none'
+description: TShorts 감성 브이로그 자동 생성 앱
+publish_to: 'none' 
+
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.17.0 <3.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.2
-  flutter_tts: ^3.6.3
+  flutter_tts: ^3.8.5
   ffmpeg_kit_flutter_full_gpl: ^6.0.3
-  google_fonts: ^6.1.0
-  file_picker: ^6.1.1
-  path_provider: ^2.1.2
-  path: ^1.9.0
+  path_provider: ^2.1.1
   share_plus: ^7.2.1
-  permission_handler: ^11.3.0
-  provider: ^6.1.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.1
 
 flutter:
   uses-material-design: true
