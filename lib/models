@@ -1,0 +1,80 @@
+class VideoTemplate {
+  final String name;
+  final String subtitle;
+  final String subtitlePosition;
+  final String subtitleAnimation;
+  final String ttsStyle;
+  final String defaultBackground;
+  final String defaultMusic;
+  final String videoStyle;
+
+  const VideoTemplate({
+    required this.name,
+    required this.subtitle,
+    required this.subtitlePosition,
+    required this.subtitleAnimation,
+    required this.ttsStyle,
+    required this.defaultBackground,
+    required this.defaultMusic,
+    required this.videoStyle,
+  });
+}
+
+final templates = [
+  VideoTemplate(
+    name: '감성 브이로그',
+    subtitle: '일상과 감성',
+    subtitlePosition: 'bottom',
+    subtitleAnimation: 'fade',
+    ttsStyle: 'calm_female',
+    defaultBackground: 'nature.jpg',
+    defaultMusic: 'lofi.mp3',
+    videoStyle: 'slow_cinematic',
+  ),
+  VideoTemplate(
+    name: '밈 스타일',
+    subtitle: '짧고 강렬하게',
+    subtitlePosition: 'top',
+    subtitleAnimation: 'zoom_shake',
+    ttsStyle: 'funny_male',
+    defaultBackground: 'meme_bg.jpg',
+    defaultMusic: 'meme_sfx.mp3',
+    videoStyle: 'fast_cut',
+  ),
+  VideoTemplate(
+    name: '뉴스 스타일',
+    subtitle: '정돈된 전달',
+    subtitlePosition: 'bottom_fixed',
+    subtitleAnimation: 'slide',
+    ttsStyle: 'anchor_male',
+    defaultBackground: 'news.jpg',
+    defaultMusic: 'news_bgm.mp3',
+    videoStyle: 'clean_news',
+  ),
+  VideoTemplate(
+    name: '성공 명언',
+    subtitle: '동기 부여용',
+    subtitlePosition: 'center',
+    subtitleAnimation: 'kinetic_typo',
+    ttsStyle: 'serious_male',
+    defaultBackground: 'success.jpg',
+    defaultMusic: 'epic.mp3',
+    videoStyle: 'gradual_focus',
+  ),
+  VideoTemplate(
+    name: '스토리텔링',
+    subtitle: '몰입감 있는 이야기',
+    subtitlePosition: 'center_full',
+    subtitleAnimation: 'typing_effect',
+    ttsStyle: 'neutral',
+    defaultBackground: 'story.jpg',
+    defaultMusic: 'immersive.mp3',
+    videoStyle: 'scene_transition',
+  ),
+  VideoTemplate(
+    name: '강의/정보',
+    subtitle: '정확한 전달',
+    subtitlePosition: 'top_or_bottom',
+    subtitleAnimation: 'slide_or_none',
+    ttsStyle: 'clear_male',
+    defaultBackground:
