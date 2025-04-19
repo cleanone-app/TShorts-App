@@ -1,58 +1,79 @@
-import 'package:flutter/material.dart';
-import 'package:tshorts/utils/tts_service.dart';
-import 'package:tshorts/utils/subtitle_image_generator.dart';
-import 'package:tshorts/utils/video_generator.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import '../models/template_model.dart';
+import '../services/video_generator.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  Future<void> createShorts(BuildContext context) async {
-    const String text = "세상에 없던 텍스트 쇼츠, TShorts로 시작하세요.";
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
-    final tts = TTSService();
-    final subtitleGen = SubtitleImageGenerator();
-    final videoGen = VideoGenerator();
+class _HomeScreenState extends State<HomeScreen> {
+  TemplateModel selectedTemplate = templates[0];
 
-    await tts.initTTS();
+  Future<void> _generateVideo() async {
+    final dir = await getTemporaryDirectory();
+    final imagePath = '${dir.path}/${selectedTemplate.backgroundImage.split('/').last}';
+    final audioPath = '${dir.path}/${selectedTemplate.backgroundMusic.split('/').last}';
 
-    final tempDir = Directory.systemTemp;
-    final audioPath = '${tempDir.path}/voice.mp3';
-    final bgmPath = '${tempDir.path}/bgm.mp3'; // 미리 준비한 배경 음악 파일
-    final bgPath = '${tempDir.path}/bg.png';   // 미리 준비한 배경 이미지 파일
+    // 복사
+    final imageAsset = await rootBundle.load(selectedTemplate.backgroundImage);
+    final musicAsset = await rootBundle.load(selectedTemplate.backgroundMusic);
+    final imageFile = File(imagePath)..writeAsBytesSync(imageAsset.buffer.asUint8List());
+    final audioFile = File(audioPath)..writeAsBytesSync(musicAsset.buffer.asUint8List());
 
-    await tts.saveToFile(text, audioPath);
-    final subtitlePath = await subtitleGen.createSubtitleImage(text);
-    final outputPath = await videoGen.generateVideo(
-      backgroundImagePath: bgPath,
-      subtitleImagePath: subtitlePath,
-      ttsAudioPath: audioPath,
-      bgmAudioPath: bgmPath,
+    final videoPath = await VideoGenerator.generateVideo(
+      imagePath: imageFile.path,
+      audioPath: audioFile.path,
+      outputFileName: 'tshorts_${selectedTemplate.id}.mp4',
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('영상 생성 완료! 저장 위치: $outputPath')),
-    );
+    await Share.shareXFiles([XFile(videoPath)], text: '${selectedTemplate.name} 스타일 영상 완성!');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
+      appBar: AppBar(
+        title: const Text('TShorts 템플릿 선택'),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'Welcome TShorts. This is New World.',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-              textAlign: TextAlign.center,
+              '영상 템플릿을 선택하세요',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => createShorts(context),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.pinkAccent),
-              child: const Text('Create Shorts'),
+            DropdownButton<TemplateModel>(
+              value: selectedTemplate,
+              onChanged: (TemplateModel? newValue) {
+                setState(() {
+                  selectedTemplate = newValue!;
+                });
+              },
+              items: templates.map<DropdownMenuItem<TemplateModel>>((TemplateModel template) {
+                return DropdownMenuItem<TemplateModel>(
+                  value: template,
+                  child: Text(template.name),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton.icon(
+              onPressed: _generateVideo,
+              icon: const Icon(Icons.video_call),
+              label: const Text('영상 생성하기'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              ),
             ),
           ],
         ),
