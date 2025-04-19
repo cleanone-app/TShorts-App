@@ -1,29 +1,25 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:share_plus/share_plus.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:ffmpeg_kit_flutter_full_gpl/ffmpeg_kit.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:tshorts_app/video_generator.dart';
 
 void main() {
-  runApp(const TShortsApp());
+  runApp(const MyApp());
 }
 
-class TShortsApp extends StatelessWidget {
-  const TShortsApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TShorts',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        textTheme: GoogleFonts.notoSansKrTextTheme(),
-      ),
+      theme: ThemeData(primarySwatch: Colors.teal),
       home: const HomePage(),
-      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -49,72 +45,66 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _speak() async {
-    if (_inputText.isNotEmpty) {
-      setState(() => _isSpeaking = true);
-      await _flutterTts.speak(_inputText);
-      setState(() => _isSpeaking = false);
-    }
+    if (_inputText.isEmpty) return;
+
+    final dir = await getTemporaryDirectory();
+    final path = '${dir.path}/voice.mp3';
+
+    setState(() => _isSpeaking = true);
+    await _flutterTts.synthesizeToFile(_inputText, path);
+    setState(() => _isSpeaking = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('음성 생성 완료!')),
+    );
   }
 
-  Future<void> _pickTextFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['txt']);
-    if (result != null && result.files.single.path != null) {
-      final file = File(result.files.single.path!);
-      final content = await file.readAsString();
-      setState(() {
-        _inputText = content;
-      });
-    }
-  }
+  Future<void> _generateVideo() async {
+    final dir = await getTemporaryDirectory();
+    final imagePath = '${dir.path}/background1.jpg';
+    final audioPath = '${dir.path}/voice.mp3';
 
-  Future<void> _shareText() async {
-    final tempDir = await getTemporaryDirectory();
-    final file = File('${tempDir.path}/tshorts.txt');
-    await file.writeAsString(_inputText);
-    await Share.shareXFiles([XFile(file.path)], text: 'TShorts 자막 텍스트');
-  }
+    final imageAsset = await rootBundle.load('assets/images/background1.jpg');
+    final musicAsset = await rootBundle.load('assets/music/bgm1.mp3');
 
-  Future<void> _requestPermissions() async {
-    await Permission.storage.request();
+    final imageFile = File(imagePath)..writeAsBytesSync(imageAsset.buffer.asUint8List());
+    final audioTemp = File('${dir.path}/bgm1.mp3')..writeAsBytesSync(musicAsset.buffer.asUint8List());
+
+    final mixedAudio = '${dir.path}/final_audio.mp3';
+
+    // bgm + voice 합치기
+    final mergeCommand = '-i "$audioPath" -i "${audioTemp.path" -filter_complex amix=inputs=2:duration=first:dropout_transition=2 "$mixedAudio"';
+    await FFmpegKit.execute(mergeCommand);
+
+    final videoPath = await VideoGenerator.generateVideo(
+      imagePath: imageFile.path,
+      audioPath: mixedAudio,
+      outputFileName: 'tshorts_video.mp4',
+    );
+
+    await Share.shareXFiles([XFile(videoPath)], text: 'TShorts 감성 브이로그 영상!');
   }
 
   @override
   Widget build(BuildContext context) {
-    _requestPermissions();
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('TShorts 텍스트 입력'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.upload_file),
-            onPressed: _pickTextFile,
-          ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: _shareText,
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('TShorts 감성 브이로그')),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Expanded(
-              child: TextField(
-                maxLines: null,
-                controller: TextEditingController(text: _inputText),
-                onChanged: (value) => _inputText = value,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: '쇼츠에 사용할 텍스트를 입력하세요',
-                ),
+            TextField(
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: '감성 문구 입력',
+                border: OutlineInputBorder(),
               ),
+              onChanged: (value) => _inputText = value,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Row(
               children: [
-                const Text('말하기 속도'),
+                const Text("말 빠르기"),
                 Expanded(
                   child: Slider(
                     value: _speechRate,
@@ -128,10 +118,17 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
+            const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _isSpeaking ? null : _speak,
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('음성으로 듣기'),
+              icon: const Icon(Icons.record_voice_over),
+              label: const Text('TTS 음성 생성'),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: _generateVideo,
+              icon: const Icon(Icons.video_call),
+              label: const Text('영상 생성 및 공유'),
             ),
           ],
         ),
